@@ -379,11 +379,13 @@ app.delete('/api/users/:id', (req, res) => {
     });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`==========================================`);
-    console.log(`   API SERVER DASHBOARD AKTIF! ✅`);
-    console.log(`   Port: ${PORT}`);
-    console.log(`   Akses Lokal: http://localhost:${PORT}`);
-    console.log(`   Akses Jaringan: Cek IP Laptop Anda`);
-    console.log(`==========================================`);
-});
+// Export app for Vercel
+module.exports = app;
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running locally on port ${PORT}`);
+    });
+}
