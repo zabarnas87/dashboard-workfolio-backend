@@ -38,6 +38,52 @@ const executeQuery = (sql, params) => {
 
 app.get('/', (req, res) => res.send('API Active'));
 
+// INIT DATABASE API (Sekali jalan buat bikin tabel di Aiven)
+app.get('/api/init-db', async (req, res) => {
+    try {
+        const createUsersTable = `
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255),
+                nik VARCHAR(50) UNIQUE,
+                pass VARCHAR(255),
+                role VARCHAR(50) DEFAULT 'User',
+                status VARCHAR(50) DEFAULT 'Pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`;
+        
+        const createTJSLTable = `
+            CREATE TABLE IF NOT EXISTS tjsl_submissions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                tanggal_pengajuan DATE,
+                tanggal_penyerahan DATE,
+                instansi VARCHAR(255),
+                kegiatan VARCHAR(255),
+                jenis_bantuan VARCHAR(100),
+                nominal BIGINT,
+                keterangan TEXT,
+                doc_transfer LONGTEXT,
+                doc_kwitansi LONGTEXT,
+                doc_serah_terima LONGTEXT,
+                doc_pengajuan LONGTEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`;
+
+        const insertAdmin = `
+            INSERT INTO users (name, nik, pass, role, status) 
+            VALUES ('Reza Barnas', '1900952', '123456', 'Admin', 'Accepted')
+            ON DUPLICATE KEY UPDATE role='Admin', status='Accepted'`;
+
+        await executeQuery(createUsersTable, []);
+        await executeQuery(createTJSLTable, []);
+        await executeQuery(insertAdmin, []);
+
+        res.json({ message: 'Database Aiven Berhasil di-Inisialisasi! ✅' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // LOGIN API
 app.post('/api/login', async (req, res) => {
     const { nik, pass } = req.body;
