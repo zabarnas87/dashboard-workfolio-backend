@@ -22,22 +22,30 @@ app.get('/', (req, res) => {
 app.use(express.static(path.resolve(__dirname, '../')));
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 
-// Database Connection Configuration
+// Database Connection Configuration (Using Pool for stability on Vercel)
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'db_dashboard_corporate'
+    database: process.env.DB_NAME || 'db_dashboard_corporate',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 };
 
-const db = mysql.createConnection(dbConfig);
+const db = mysql.createPool(dbConfig);
 
-db.connect((err) => {
-    if (err) {
-        console.error('Database connection failed:', err);
-        return;
-    }
-    console.log('Connected to MySQL via Laragon!');
+// Helper function to query the pool
+const query = (sql, params) => {
+    return new Promise((resolve, reject) => {
+        db.query(sql, params, (err, results) => {
+            if (err) reject(err);
+            else resolve(results);
+        });
+    });
+};
+
+console.log('Database Pool Initialized! ⚡');
 
     // Auto-Create Database (Only if not using a managed DB that already exists)
     const dbName = process.env.DB_NAME || 'db_dashboard_corporate';
