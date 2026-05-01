@@ -92,30 +92,27 @@ db.connect((err) => {
                 if (err) console.error('Error creating Users table:', err);
                 else {
                     console.log('Users Table ready! ✅');
-                    
-                    // PAKSA MIGRASI (Tambahin kolom kalau belum ada)
-                    db.query("SHOW COLUMNS FROM users LIKE 'role'", (err, resRole) => {
-                        if (!err && resRole.length === 0) {
-                            db.query("ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'User' AFTER pass");
-                        }
-                    });
-                    
-                    db.query("SHOW COLUMNS FROM users LIKE 'status'", (err, resStatus) => {
-                        if (!err && resStatus.length === 0) {
-                            db.query("ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'Pending' AFTER role", (err) => {
-                                // Setelah kolom status ada, baru paksa update admin
-                                db.query("UPDATE users SET role = 'Admin', status = 'Accepted' WHERE nik = '1900952'");
-                            });
-                        } else {
-                            // Kalau kolom sudah ada, tetep paksa update admin
-                            db.query("UPDATE users SET role = 'Admin', status = 'Accepted' WHERE nik = '1900952'");
-                        }
-                    });
-
-                    console.log('Admin Promotion logic executed! 👑');
+                    // ... rest of the logic
                 }
             });
         });
+    });
+});
+
+// DEBUG ENDPOINT: Cek Koneksi DB dari Vercel
+app.get('/api/debug-db', (req, res) => {
+    const testDb = mysql.createConnection(dbConfig);
+    testDb.connect((err) => {
+        if (err) {
+            return res.json({
+                status: 'error',
+                message: err.message,
+                code: err.code,
+                config: { ...dbConfig, password: '***' }
+            });
+        }
+        res.json({ status: 'success', message: 'Connected to Database!' });
+        testDb.end();
     });
 });
 
@@ -306,6 +303,14 @@ app.put('/api/tjsl/:id', (req, res) => {
 });
 
 // ================= USER MANAGEMENT API =================
+
+// Debug route to view raw database content
+app.get('/api/debug-db', (req, res) => {
+    db.query('SELECT * FROM tjsl_submissions ORDER BY tanggal_pengajuan DESC', (err, results) => {
+        if (err) return res.status(500).json({ error: 'Database query failed', details: err.message });
+        res.json(results);
+    });
+});
 
 // Get all users
 app.get('/api/users', (req, res) => {
